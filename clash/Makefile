@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clash
-PKG_VERSION:=_meta
+PKG_VERSION:=1.86
 
-PKG_RELEASE:=1.85
+PKG_RELEASE:=meta
 
 include $(INCLUDE_DIR)/package.mk
 
