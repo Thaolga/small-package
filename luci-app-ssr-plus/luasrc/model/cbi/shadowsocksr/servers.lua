@@ -3,82 +3,22 @@ require "luci.http"
 require "luci.dispatcher"
 require "luci.model.uci"
 local m, s, o
+local shadowsocksr = "shadowsocksr"
 local uci = luci.model.uci.cursor()
 local server_count = 0
 uci:foreach("shadowsocksr", "servers", function(s)
 	server_count = server_count + 1
 end)
 
-m = Map("shadowsocksr", translate("Servers subscription and manage"))
+m = Map(shadowsocksr)
 
--- Server Subscribe
-s = m:section(TypedSection, "server_subscribe")
-s.anonymous = true
 
-o = s:option(Flag, "auto_update", translate("Auto Update"))
-o.rmempty = false
-o.description = translate("Auto Update Server subscription, GFW list and CHN route")
-
-o = s:option(ListValue, "auto_update_time", translate("Update time (every day)"))
-for t = 0, 23 do
-	o:value(t, t .. ":00")
-end
-o.default = 2
-o.rmempty = false
-
-o = s:option(DynamicList, "subscribe_url", translate("Subscribe URL"))
-o.rmempty = true
-
-o = s:option(Value, "filter_words", translate("Subscribe Filter Words"))
-o.rmempty = true
-o.description = translate("Filter Words splited by /")
-
-o = s:option(Value, "save_words", translate("Subscribe Save Words"))
-o.rmempty = true
-o.description = translate("Save Words splited by /")
-
-o = s:option(Button, "update_Sub", translate("Update Subscribe List"))
-o.inputstyle = "reload"
-o.description = translate("Update subscribe url list first")
-o.write = function()
-	uci:commit("shadowsocksr")
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers"))
-end
-
-o = s:option(Flag, "switch", translate("Subscribe Default Auto-Switch"))
-o.rmempty = false
-o.description = translate("Subscribe new add server default Auto-Switch on")
-o.default = "1"
-
-o = s:option(Flag, "proxy", translate("Through proxy update"))
-o.rmempty = false
-o.description = translate("Through proxy update list, Not Recommended ")
-
-o = s:option(Button, "subscribe", translate("Update All Subscribe Servers"))
-o.rawhtml = true
-o.template = "shadowsocksr/subscribe"
-
-o = s:option(Button, "delete", translate("Delete All Subscribe Servers"))
-o.inputstyle = "reset"
-o.description = string.format(translate("Server Count") .. ": %d", server_count)
-o.write = function()
-	uci:delete_all("shadowsocksr", "servers", function(s)
-		if s.hashkey or s.isSubscribe then
-			return true
-		else
-			return false
-		end
-	end)
-	uci:save("shadowsocksr")
-	uci:commit("shadowsocksr")
-	luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete"))
-	return
-end
 
 -- [[ Servers Manage ]]--
 s = m:section(TypedSection, "servers")
 s.anonymous = true
 s.addremove = true
+s.description = string.format(translate("Server Count") ..  ": %d", server_count)
 s.template = "cbi/tblsection"
 s.sortable = true
 s.extedit = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers", "%s")
@@ -89,6 +29,7 @@ function s.create(...)
 		return
 	end
 end
+
 
 o = s:option(DummyValue, "type", translate("Type"))
 function o.cfgvalue(self, section)

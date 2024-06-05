@@ -142,4 +142,49 @@
 		"#cbi-shadowsocksr-servers table",
 		"cbi.sts.shadowsocksr.servers"
 	);
+        
+        function _cbi_row_top(id) {
+		var dom = document.getElementById("cbi-shadowsocksr-" + id);
+		if (dom) {
+			var trs = document.getElementById("cbi-shadowsocksr-servers").getElementsByClassName("cbi-section-table-row");
+			if (trs && trs.length > 0) {
+				for (var i = 0; i < trs.length; i++) {
+					var up = dom.getElementsByClassName("cbi-button-up");
+					if (up) {
+						cbi_row_swap(up[0], true, 'cbi.sts.shadowsocksr.servers');
+					}
+				}
+			}
+		}
+	}
+
+	var edit_btn = document.getElementById("cbi-shadowsocksr-servers").getElementsByClassName("cbi-button cbi-button-edit");
+	for (var i = 0; i < edit_btn.length; i++) {
+		try {
+			var onclick_str = edit_btn[i].getAttribute("onclick");
+			var id = onclick_str.substring(onclick_str.lastIndexOf('/') + 1, onclick_str.length - 1);
+			var td = edit_btn[i].parentNode;
+			var new_div = "";
+			new_div += '<input class="cbi-button" type="button" value="<%:To Top%>" onclick="_cbi_row_top(\'' + id + '\')"/>&nbsp;&nbsp;';
+			td.innerHTML = new_div + td.innerHTML;
+		}
+		catch(err) {
+			console.error(err);
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
