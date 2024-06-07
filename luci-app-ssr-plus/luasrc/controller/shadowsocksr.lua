@@ -9,7 +9,7 @@ e.dependent=true
 e.acl_depends={"luci-app-ssr-plus"}
 entry({"admin","services","shadowsocksr","client"},cbi("shadowsocksr/client"),_("SSR Client"),10).leaf=true
 entry({"admin","services","shadowsocksr","servers"},arcombine(cbi("shadowsocksr/servers",{autoapply=true}),cbi("shadowsocksr/client-config")),_("Servers Nodes"),20).leaf=true
-entry({"admin","services","shadowsocksr","subscription"},cbi("shadowsocksr/subscription"),_("Node Subscribe"),25).leaf=true	
+entry({"admin","services","shadowsocksr","subscription"},cbi("shadowsocksr/subscription"),_("Node Subscribe"),25).leaf=true
 entry({"admin","services","shadowsocksr","control"},cbi("shadowsocksr/control"),_("Access Control"),30).leaf=true
 entry({"admin","services","shadowsocksr","advanced"},cbi("shadowsocksr/advanced"),_("Advanced Settings"),50).leaf=true
 entry({"admin","services","shadowsocksr","server"},arcombine(cbi("shadowsocksr/server"),cbi("shadowsocksr/server-config")),_("SSR Server"),60).leaf=true
@@ -19,14 +19,15 @@ entry({"admin","services","shadowsocksr","refresh"},call("refresh_data"))
 entry({"admin","services","shadowsocksr","subscribe"},call("subscribe"))
 entry({"admin","services","shadowsocksr","checkport"},call("check_port"))
 entry({"admin","services","shadowsocksr","log"},form("shadowsocksr/log"),_("Log"),80).leaf=true
-entry({"admin","services","shadowsocksr","get_log"},call("get_log")).leaf = true
-entry({"admin","services","shadowsocksr","clear_log"},call("clear_log")).leaf = true
+entry({"admin","services","shadowsocksr","get_log"},call("get_log")).leaf=true
+entry({"admin","services","shadowsocksr","clear_log"},call("clear_log")).leaf=true
 entry({"admin","services","shadowsocksr","run"},call("act_status"))
 entry({"admin","services","shadowsocksr","ping"},call("act_ping"))
 entry({"admin","services","shadowsocksr","reset"},call("act_reset"))
 entry({"admin","services","shadowsocksr","restart"},call("act_restart"))
 entry({"admin","services","shadowsocksr","delete"},call("act_delete"))
 end
+
 function subscribe()
 luci.sys.call("/usr/bin/lua /usr/share/shadowsocksr/subscribe.lua >>/var/log/ssrplus.log")
 luci.http.prepare_content("application/json")
@@ -35,6 +36,27 @@ end
 function act_status()
 local e={}
 e.running=luci.sys.call("busybox ps -w | grep ssr-retcp | grep -v grep >/dev/null")==0
+ e.game = false
+    if tonumber(luci.sys.exec("ps -w | grep ssr-reudp |grep -v grep| wc -l"))>0 then
+        e.game= true
+    else
+        if tonumber(luci.sys.exec("ps -w | grep ssr-retcp |grep \"\\-u\"|grep -v grep| wc -l"))>0 then
+            e.game= true
+        end
+    end
+    -- 检测国内通道
+    e.baidu = false
+    sret = luci.sys.call("/usr/bin/ssr-check www.baidu.com 80 3 1")
+    if sret == 0 then
+        e.baidu =  true
+    end
+    
+    -- 检测国外通道
+    e.google = false
+    sret = luci.sys.call("/usr/bin/ssr-check www.google.com 80 3 1")
+    if sret == 0 then
+        e.google =  true
+    end
 luci.http.prepare_content("application/json")
 luci.http.write_json(e)
 end
@@ -110,11 +132,11 @@ luci.http.prepare_content("application/json")
 luci.http.write_json({ret=t})
 end
 function get_log()
-	luci.http.write(luci.sys.exec(
-		"[ -f '/var/log/ssrplus.log' ] && cat /var/log/ssrplus.log"))
+luci.http.write(luci.sys.exec(
+"[ -f '/var/log/ssrplus.log' ] && cat /var/log/ssrplus.log"))
 end
 function clear_log()
-	luci.sys.call("echo '' > /var/log/ssrplus.log")
+luci.sys.call("echo '' > /var/log/ssrplus.log")
 end
 function act_reset()
 luci.sys.call("/etc/init.d/shadowsocksr reset &")
