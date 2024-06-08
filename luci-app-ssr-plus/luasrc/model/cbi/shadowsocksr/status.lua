@@ -7,6 +7,7 @@ local m, s, o
 local redir_run = 0
 local reudp_run = 0
 local sock5_run = 0
+local privoxy_run=0
 local server_run = 0
 local kcptun_run = 0
 local tunnel_run = 0
@@ -92,6 +93,10 @@ if Process_list:find("ssrplus/bin/dns2tcp") or Process_list:find("ssrplus/bin/mo
 	pdnsd_run = 1
 end
 
+if luci.sys.call("pidof privoxy >/dev/null") == 0 then
+privoxy_run=1
+end
+
 m = SimpleForm("Version")
 m.reset = false
 m.submit = false
@@ -128,6 +133,16 @@ if sock5_run == 1 then
 	s.value = font_blue .. bold_on .. translate("Running") .. bold_off .. font_off
 else
 	s.value = style_blue .. bold_on .. translate("Not Running") .. bold_off .. font_off
+end
+
+if nixio.fs.access("/usr/sbin/privoxy") then
+s=m:field(DummyValue,"privoxy_run",translate("HTTP Proxy")) 
+s.rawhtml  = true
+if privoxy_run == 1 then
+s.value =font_blue .. bold_on .. translate("Running") .. bold_off .. font_off
+else
+s.value = translate("Not Running")
+end
 end
 
 s = m:field(DummyValue, "server_run", translate("Local Servers"))

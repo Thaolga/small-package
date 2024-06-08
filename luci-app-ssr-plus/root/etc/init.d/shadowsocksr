@@ -247,6 +247,47 @@ start_dns() {
 		fi
 	fi
 }
+privoxy_config_file() {
+	local socks5_proxy=$(uci_get_by_type socks5_proxy local_port 1082)
+	local http_proxy=$(uci_get_by_type socks5_proxy http_port 1083)
+	lan_ip=$(uci get network.lan.ipaddr)
+
+	/etc/init.d/privoxy stop
+	/etc/init.d/privoxy disable
+
+	cat > /etc/config/privoxy <<EOF
+config	privoxy	'privoxy'
+	option	confdir		'/etc/privoxy'
+	option	logdir		'/var/log'
+	option	logfile		'privoxy.log'
+	list	filterfile	'default.filter'
+#	list	filterfile	'user.filter'
+	list	actionsfile	'match-all.action'
+	list	actionsfile	'default.action'
+#	list	actionsfile	'user.action'
+	list	listen_address	'0.0.0.0:$http_proxy'
+	option	toggle		'1'
+	option	enable_remote_toggle	'1'
+	option	enable_remote_http_toggle	'0'
+	option	enable_edit_actions	'1'
+	option	enforce_blocks		'0'
+	option	buffer_limit		'4096'
+	option	forwarded_connect_retries	'0'
+	option	accept_intercepted_requests	'0'
+	option	allow_cgi_request_crunching	'0'
+	option	split_large_forms	'0'
+	option	keep_alive_timeout	'300'
+	option	socket_timeout		'300'
+	list	permit_access		'$lan_ip/24'
+	option	debug_1		'0'
+	option	debug_512	'1'
+	option	debug_1024	'0'
+	option	debug_4096	'1'
+	option	debug_8192	'1'
+	list forward_socks5 '/ 0.0.0.0:$socks5_proxy .'
+EOF
+
+}
 
 gen_service_file() { #1-server.type 2-cfgname 3-file_path
 	local fastopen
@@ -634,6 +675,7 @@ start_local() {
 	[ "$LOCAL_SERVER" = "nil" ] && return 1
 	local local_port=$(uci_get_by_type socks5_proxy local_port)
 	[ "$LOCAL_SERVER" == "$SHUNT_SERVER" ] && tmp_local_port=$local_port
+        local http_enable=$(uci_get_by_type socks5_proxy http_enable)
 	local type=$(uci_get_by_name $LOCAL_SERVER type)
 	case "$type" in
 	ss | ssr)
@@ -699,8 +741,15 @@ start_local() {
 		;;
 	esac
 	local_enable=1
+                     if [ "$http_enable" -eq 1 ] ;then
+		privoxy_config_file                                      			
+		/etc/init.d/privoxy enable && /etc/init.d/privoxy start                                 
+                    echolog "Global_Http:$type  Started!"
+		privoxy_enable=1
+	fi
 	return 0
 }
+
 
 Start_Run() {
 	if [ "$(uci_get_by_type global threads 0)" == "0" ]; then
@@ -1118,7 +1167,7 @@ stop() {
 		# Force kill hanged programs
 		$PS -w | grep -v "grep" | grep "$TMP_PATH" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 ; \
 	)
-	killall -q -9 v2ray-plugin obfs-local xray-plugin
+	killall -q -9 v2ray-plugin obfs-local xray-plugin  privoxy
 	rm -f /var/lock/ssr-monitor.lock
 	if [ "$(uci -q get "dhcp.@dnsmasq[0]._unused_ssrp_changed")" = "1" ]; then
 		uci -q del "dhcp.@dnsmasq[0].noresolv"
@@ -1181,6 +1230,7 @@ reset() {
 		add shadowsocksr socks5_proxy
 		set shadowsocksr.@socks5_proxy[0].server='nil'
 		set shadowsocksr.@socks5_proxy[0].local_port='1080'
+		set shadowsocksr.@socks5_proxy[0].http_port ='1081'
 		add shadowsocksr server_global
 		set shadowsocksr.@server_global[0].enable_server='0'
 		commit shadowsocksr

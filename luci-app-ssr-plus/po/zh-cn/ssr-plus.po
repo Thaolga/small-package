@@ -1058,3 +1058,13 @@ msgstr "socks5 服务器可以从外部接收的最大数据包大小（单位�
 
 msgid "Disable ChinaDNS-NG"
 msgstr "直通模式（禁用 ChinaDNS-NG）"
+
+msgid "Enable HTTP Proxy"
+msgstr "启用HTTP代理"
+
+msgid "Proxy Port"
+msgstr "代理端口"
+
+msgid "HTTP Proxy"
+msgstr "HTTP代理"
+
