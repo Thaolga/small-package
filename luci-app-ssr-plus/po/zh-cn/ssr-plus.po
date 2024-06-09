@@ -1068,3 +1068,8 @@ msgstr "代理端口"
 msgid "HTTP Proxy"
 msgstr "HTTP代理"
 
+msgid "GEOLOCATION"
+msgstr "地理位置"
+
+
+
