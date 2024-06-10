@@ -4,7 +4,7 @@ local h=require"luci.cbi.datatypes"
 local function s(e)
 return luci.sys.exec('type -t -p "%s"'%e)~=""and true or false
 end
-i=Map("shadowsocksr")
+i=Map("shadowsocksr", translate("ShadowSocksR Plus+ "))
 i:section(SimpleSection).template="shadowsocksr/status"
 local a={}
 n:foreach("shadowsocksr","servers",function(e)
