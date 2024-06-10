@@ -125,7 +125,7 @@ end
 s = SimpleForm("openclash")
 s.reset = false
 s.submit = false
-s:section(SimpleSection).template  = "openclash/myip"
+
 
 local t = {
     {enable, disable}
